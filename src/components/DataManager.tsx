@@ -10,6 +10,7 @@ import { Database, Search, Download, Filter, RefreshCcw } from "lucide-react";
 
 export const DataManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDataset, setSelectedDataset] = useState("1");
   
   const datasets = [
     {
@@ -41,13 +42,104 @@ export const DataManager = () => {
     }
   ];
 
-  const sampleData = [
-    { id: 1, title: "Wireless Headphones", price: "$99.99", category: "Electronics", stock: 45 },
-    { id: 2, title: "Running Shoes", price: "$129.99", category: "Sports", stock: 23 },
-    { id: 3, title: "Coffee Maker", price: "$79.99", category: "Home", stock: 12 },
-    { id: 4, title: "Smartphone Case", price: "$24.99", category: "Electronics", stock: 78 },
-    { id: 5, title: "Yoga Mat", price: "$39.99", category: "Sports", stock: 34 }
-  ];
+  const datasetPreviews = {
+    "1": [
+      { id: 1, title: "Wireless Headphones", price: "$99.99", category: "Electronics", stock: 45 },
+      { id: 2, title: "Running Shoes", price: "$129.99", category: "Sports", stock: 23 },
+      { id: 3, title: "Coffee Maker", price: "$79.99", category: "Home", stock: 12 },
+      { id: 4, title: "Smartphone Case", price: "$24.99", category: "Electronics", stock: 78 },
+      { id: 5, title: "Yoga Mat", price: "$39.99", category: "Sports", stock: 34 }
+    ],
+    "2": [
+      { id: 1, headline: "Tech Industry Updates", author: "John Smith", category: "Technology", publishDate: "2024-01-15" },
+      { id: 2, headline: "Climate Change Report", author: "Jane Doe", category: "Environment", publishDate: "2024-01-14" },
+      { id: 3, headline: "Market Analysis Today", author: "Bob Wilson", category: "Finance", publishDate: "2024-01-13" },
+      { id: 4, headline: "Sports Championship", author: "Alice Brown", category: "Sports", publishDate: "2024-01-12" },
+      { id: 5, headline: "Health & Wellness Tips", author: "David Lee", category: "Health", publishDate: "2024-01-11" }
+    ],
+    "3": [
+      { id: 1, username: "@user123", content: "Great product launch today!", likes: 245, shares: 12 },
+      { id: 2, username: "@techguru", content: "AI is changing everything", likes: 892, shares: 45 },
+      { id: 3, username: "@fashionista", content: "New collection is amazing", likes: 156, shares: 8 },
+      { id: 4, username: "@foodie", content: "Best restaurant in town", likes: 321, shares: 23 },
+      { id: 5, username: "@traveler", content: "Beautiful sunset in Bali", likes: 567, shares: 34 }
+    ]
+  };
+
+  const renderTableHeaders = () => {
+    switch (selectedDataset) {
+      case "1":
+        return (
+          <>
+            <TableHead>ID</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Stock</TableHead>
+          </>
+        );
+      case "2":
+        return (
+          <>
+            <TableHead>ID</TableHead>
+            <TableHead>Headline</TableHead>
+            <TableHead>Author</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Publish Date</TableHead>
+          </>
+        );
+      case "3":
+        return (
+          <>
+            <TableHead>ID</TableHead>
+            <TableHead>Username</TableHead>
+            <TableHead>Content</TableHead>
+            <TableHead>Likes</TableHead>
+            <TableHead>Shares</TableHead>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderTableRows = () => {
+    const data = datasetPreviews[selectedDataset] || [];
+    
+    return data.map((item) => (
+      <TableRow key={item.id}>
+        <TableCell>{item.id}</TableCell>
+        {selectedDataset === "1" && (
+          <>
+            <TableCell className="font-medium">{item.title}</TableCell>
+            <TableCell>{item.price}</TableCell>
+            <TableCell>
+              <Badge variant="outline">{item.category}</Badge>
+            </TableCell>
+            <TableCell>{item.stock}</TableCell>
+          </>
+        )}
+        {selectedDataset === "2" && (
+          <>
+            <TableCell className="font-medium">{item.headline}</TableCell>
+            <TableCell>{item.author}</TableCell>
+            <TableCell>
+              <Badge variant="outline">{item.category}</Badge>
+            </TableCell>
+            <TableCell>{item.publishDate}</TableCell>
+          </>
+        )}
+        {selectedDataset === "3" && (
+          <>
+            <TableCell className="font-medium">{item.username}</TableCell>
+            <TableCell>{item.content}</TableCell>
+            <TableCell>{item.likes}</TableCell>
+            <TableCell>{item.shares}</TableCell>
+          </>
+        )}
+      </TableRow>
+    ));
+  };
 
   return (
     <div className="space-y-6">
@@ -157,28 +249,29 @@ export const DataManager = () => {
           <CardDescription>Sample records from your selected dataset</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Select value={selectedDataset} onValueChange={setSelectedDataset}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Select dataset to preview" />
+              </SelectTrigger>
+              <SelectContent>
+                {datasets.map((dataset) => (
+                  <SelectItem key={dataset.id} value={dataset.id.toString()}>
+                    {dataset.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Stock</TableHead>
+                {renderTableHeaders()}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sampleData.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell>{item.price}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{item.category}</Badge>
-                  </TableCell>
-                  <TableCell>{item.stock}</TableCell>
-                </TableRow>
-              ))}
+              {renderTableRows()}
             </TableBody>
           </Table>
           
