@@ -4,7 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, MoreHorizontal, Download, Save, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const historyData = [
   { id: "job_123", target: "https://example-store.com", status: "completed", records: 1250, timestamp: "2 hours ago" },
@@ -50,16 +58,25 @@ export const ScrapeHistory = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>
+                  <Checkbox aria-label="Select all" />
+                </TableHead>
                 <TableHead>Job ID</TableHead>
                 <TableHead>Target</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Records</TableHead>
                 <TableHead>Timestamp</TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredHistory.map((item) => (
                 <TableRow key={item.id}>
+                  <TableCell>
+                    <Checkbox aria-label={`Select row ${item.id}`} />
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{item.id}</TableCell>
                   <TableCell className="font-medium">{item.target}</TableCell>
                   <TableCell>
@@ -67,6 +84,38 @@ export const ScrapeHistory = () => {
                   </TableCell>
                   <TableCell>{item.records.toLocaleString()}</TableCell>
                   <TableCell className="text-muted-foreground">{item.timestamp}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                        >
+                          <span className="sr-only">Toggle menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Preview data</DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save to Data Manager
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

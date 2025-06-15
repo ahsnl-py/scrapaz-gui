@@ -4,11 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadCloud } from "lucide-react";
 
-export const FileScrapeForm = ({ fileType }: { fileType: string }) => {
+export const FileScrapeForm = () => {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Upload a <span className="font-semibold text-primary">{fileType.toUpperCase()}</span> file to extract data.
+        Upload a file to extract data. Supported types: PDF, DOCS, Excel, Text, Flat File.
       </p>
       <div className="space-y-2">
         <Label htmlFor="file-upload">Choose File</Label>

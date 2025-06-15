@@ -3,20 +3,16 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Globe, FileText, FileSpreadsheet, FileCode, FileType, File } from "lucide-react";
+import { Globe, File } from "lucide-react";
 import { WebScrapeForm } from "./WebScrapeForm";
 import { FileScrapeForm } from "./FileScrapeForm";
 import { ScrapeHistory } from "./ScrapeHistory";
 
-type ScrapeType = "web" | "pdf" | "docs" | "excel" | "text" | "flat file";
+type ScrapeType = "web" | "file";
 
 const scrapeTypes = [
   { id: "web", label: "Web", icon: Globe },
-  { id: "pdf", label: "PDF", icon: FileType },
-  { id: "docs", label: "Docs", icon: FileCode },
-  { id: "excel", label: "Excel", icon: FileSpreadsheet },
-  { id: "text", label: "Text", icon: FileText },
-  { id: "flat file", label: "Flat File", icon: File },
+  { id: "file", label: "File", icon: File },
 ] as const;
 
 export const ScrapingInterface = () => {
@@ -26,7 +22,7 @@ export const ScrapingInterface = () => {
     if (activeScrapeType === "web") {
       return <WebScrapeForm />;
     } else {
-      return <FileScrapeForm fileType={activeScrapeType} />;
+      return <FileScrapeForm />;
     }
   };
 
