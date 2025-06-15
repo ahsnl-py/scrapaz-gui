@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Globe, Workflow, Database, Play, Home, User, LogOut } from "lucide-react";
 import { ScrapingInterface } from "@/components/ScrapingInterface";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
@@ -196,16 +195,19 @@ const Index = () => {
             <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
               <div className="container mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      {menuItems.find(item => item.id === activeTab)?.title}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {activeTab === "home" && "Overview of your data engineering activities"}
-                      {activeTab === "scraper" && "Configure and run web scrapers"}
-                      {activeTab === "workflow" && "Build and manage data processing workflows"}
-                      {activeTab === "data" && "Manage and analyze your scraped data"}
-                    </p>
+                  <div className="flex items-center gap-4">
+                    <SidebarTrigger />
+                    <div>
+                      <h2 className="text-2xl font-bold">
+                        {menuItems.find(item => item.id === activeTab)?.title}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {activeTab === "home" && "Overview of your data engineering activities"}
+                        {activeTab === "scraper" && "Configure and run web scrapers"}
+                        {activeTab === "workflow" && "Build and manage data processing workflows"}
+                        {activeTab === "data" && "Manage and analyze your scraped data"}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link to="/settings">
