@@ -1,12 +1,12 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Play, Settings, Info, Plus, Trash2 } from "lucide-react";
+import { Play, Info, Plus, Trash2, RotateCcw, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type SchemaField = {
   id: number;
@@ -23,6 +23,7 @@ export const WebScrapeForm = () => {
     { id: 2, name: 'author', type: 'string' },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleAddField = () => {
@@ -35,6 +36,17 @@ export const WebScrapeForm = () => {
 
   const handleFieldChange = (id: number, key: 'name' | 'type', value: string) => {
     setSchemaFields(schemaFields.map(field => field.id === id ? { ...field, [key]: value } : field));
+  };
+
+  const handleClearForm = () => {
+    setUrl("https://quotes.toscrape.com/");
+    setCssSelector(".quote");
+    setAiProvider("groq");
+    setSchemaFields([
+      { id: 1, name: 'quote', type: 'string' },
+      { id: 2, name: 'author', type: 'string' },
+    ]);
+    toast({ title: "Form Cleared", description: "All fields have been reset to their default values." });
   };
 
   const handleStartScraping = async () => {
@@ -64,7 +76,8 @@ export const WebScrapeForm = () => {
     console.log({ url, cssSelector, aiProvider, dataSchema });
     setTimeout(() => {
       setIsLoading(false);
-      toast({ title: "Scraping Started", description: `Successfully initiated scraping for ${url}` });
+      toast({ title: "Scraping Complete!", description: `Successfully scraped ${url}` });
+      setIsDialogOpen(true);
     }, 2000);
   };
 
@@ -155,11 +168,46 @@ export const WebScrapeForm = () => {
           <Play className="w-4 h-4 mr-2" />
           {isLoading ? "Starting..." : "Start Scraping"}
         </Button>
-        <Button variant="outline">
-          <Settings className="w-4 h-4 mr-2" />
-          Advanced Settings
+        <Button variant="outline" onClick={handleClearForm} disabled={isLoading}>
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Clear
         </Button>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) {
+          toast({
+            title: "Data Not Saved",
+            description: "The cached data from this scrape will be lost.",
+            variant: "destructive"
+          });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Scraping Complete</DialogTitle>
+            <DialogDescription>
+              What would you like to do with the scraped data? If you close this, the data will be discarded.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-start gap-2 pt-4">
+            <Button onClick={() => {
+              toast({ title: "Downloading...", description: "Your file is being prepared." });
+              setIsDialogOpen(false);
+            }}>
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </Button>
+            <Button variant="secondary" onClick={() => {
+              toast({ title: "Saving...", description: "Data is being saved to the Data Manager." });
+              setIsDialogOpen(false);
+            }}>
+              Save to Data Manager
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

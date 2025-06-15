@@ -1,181 +1,150 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Search, MoreHorizontal, Download, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { MoreHorizontal, Download, Trash2, Eye } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-const historyData = [
-  { id: "job_123", target: "https://quotes.toscrape.com", status: "completed", records: 2, timestamp: "2 hours ago", scrapedData: [{ quote: "The world as we have created it is a process of our thinking. It cannot be changed without changing our thinking.", author: "Albert Einstein"}, { quote: "It is our choices, Harry, that show what we truly are, far more than our abilities.", author: "J.K. Rowling"}] },
-  { id: "job_122", target: "news-site.com/articles", status: "completed", records: 580, timestamp: "1 day ago", scrapedData: [{ title: "Breaking News", content: "..."}] },
-  { id: "job_121", target: "https://example.com", status: "failed", records: 0, timestamp: "2 days ago", scrapedData: null },
-  { id: "job_120", target: "https://example-store.com/products", status: "running", records: 300, timestamp: "5 minutes ago", scrapedData: null },
+type Job = {
+  id: string;
+  source: string;
+  type: "Web" | "File";
+  status: "Completed" | "In Progress" | "Failed";
+  timestamp: string;
+  itemCount: number;
+  data: Record<string, any>;
+};
+
+const jobs: Job[] = [
+  { id: "job-1", source: "quotes.toscrape.com", type: "Web", status: "Completed", timestamp: "2024-05-20 10:30 AM", itemCount: 10, data: { quotes: [{ quote: "The world as we have created it is a process of our thinking. It cannot be changed without changing our thinking.", author: "Albert Einstein" }] } },
+  { id: "job-2", source: "books.toscrape.com", type: "Web", status: "Completed", timestamp: "2024-05-19 03:45 PM", itemCount: 50, data: { books: [{ title: "A Light in the Attic" }] } },
+  { id: "job-3", source: "monthly_report.pdf", type: "File", status: "Failed", timestamp: "2024-05-18 09:00 AM", itemCount: 0, data: {} },
+  { id: "job-4", source: "inventory.xlsx", type: "File", status: "In Progress", timestamp: "2024-05-20 11:00 AM", itemCount: 1500, data: {} },
 ];
 
 export const ScrapeHistory = () => {
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
-  const filteredHistory = historyData.filter(item =>
-    item.target.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredJobs = jobs.filter(job =>
+    job.source.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedRows(new Set(filteredHistory.map(item => item.id)));
-    } else {
-      setSelectedRows(new Set());
-    }
+    setSelectedRows(checked ? filteredJobs.map(j => j.id) : []);
   };
 
-  const handleSelectRow = (id: string, checked: boolean) => {
-    const newSelectedRows = new Set(selectedRows);
-    if (checked) {
-      newSelectedRows.add(id);
-    } else {
-      newSelectedRows.delete(id);
-    }
-    setSelectedRows(newSelectedRows);
-  };
-  
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "completed": return "default";
-      case "running": return "secondary";
-      case "failed": return "destructive";
-      default: return "outline";
-    }
-  };
+  const isAllSelected = selectedRows.length === filteredJobs.length && filteredJobs.length > 0;
+  const isSomeSelected = selectedRows.length > 0 && selectedRows.length < filteredJobs.length;
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-            <div className="space-y-1.5">
-                <CardTitle>Scraping History</CardTitle>
-                <CardDescription>Review your previous and ongoing scraping jobs.</CardDescription>
-            </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={selectedRows.size === 0}>
-                        Actions
-                        <MoreHorizontal className="w-4 h-4 ml-2" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Selected
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive focus:text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Selected
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Scraping History</CardTitle>
+          <CardDescription>Review and manage your past scraping jobs.</CardDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input 
+            placeholder="Search by source..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" disabled={selectedRows.length === 0}>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Download className="mr-2 h-4 w-4" />
+                Download Selected
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Selected
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="relative mb-4">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search by target or job ID..."
-            className="w-full pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40px]">
-                  <Checkbox 
-                    aria-label="Select all"
-                    onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                    checked={selectedRows.size > 0 && selectedRows.size === filteredHistory.length}
-                    indeterminate={selectedRows.size > 0 && selectedRows.size < filteredHistory.length}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                  checked={isAllSelected ? true : (isSomeSelected ? "indeterminate" : false)}
+                  aria-label="Select all rows"
+                />
+              </TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Items</TableHead>
+              <TableHead>Timestamp</TableHead>
+              <TableHead className="text-right">Preview</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredJobs.map((job) => (
+              <TableRow key={job.id} data-state={selectedRows.includes(job.id) && "selected"}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedRows.includes(job.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedRows(
+                        checked
+                          ? [...selectedRows, job.id]
+                          : selectedRows.filter((id) => id !== job.id)
+                      );
+                    }}
+                    aria-label={`Select row ${job.id}`}
                   />
-                </TableHead>
-                <TableHead>Job ID</TableHead>
-                <TableHead>Target</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Records</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead className="text-center">Preview</TableHead>
+                </TableCell>
+                <TableCell className="font-medium">{job.source}</TableCell>
+                <TableCell>{job.type}</TableCell>
+                <TableCell>
+                  <Badge variant={
+                    job.status === "Completed" ? "default" :
+                    job.status === "Failed" ? "destructive" :
+                    "secondary"
+                  }>
+                    {job.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{job.itemCount}</TableCell>
+                <TableCell>{job.timestamp}</TableCell>
+                <TableCell className="text-right">
+                   <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" disabled={job.status !== 'Completed'}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>Data Preview: {job.source}</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-4 rounded-md bg-muted p-4 max-h-[80vh] overflow-y-auto">
+                        <pre>
+                          {JSON.stringify(job.data, null, 2)}
+                        </pre>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredHistory.map((item) => (
-                <TableRow key={item.id} data-state={selectedRows.has(item.id) && "selected"}>
-                  <TableCell>
-                    <Checkbox 
-                      aria-label={`Select row ${item.id}`}
-                      onCheckedChange={(checked) => handleSelectRow(item.id, Boolean(checked))}
-                      checked={selectedRows.has(item.id)}
-                    />
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{item.id}</TableCell>
-                  <TableCell className="font-medium">{item.target}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(item.status)}>{item.status}</Badge>
-                  </TableCell>
-                  <TableCell>{item.records.toLocaleString()}</TableCell>
-                  <TableCell className="text-muted-foreground">{item.timestamp}</TableCell>
-                  <TableCell className="text-center">
-                    {item.scrapedData ? (
-                        <Sheet>
-                          <SheetTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                            >
-                              <span className="sr-only">Preview data</span>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent>
-                            <SheetHeader>
-                              <SheetTitle>Data Preview</SheetTitle>
-                              <SheetDescription>
-                                Job ID: {item.id}
-                              </SheetDescription>
-                            </SheetHeader>
-                            <div className="mt-4 rounded-md bg-muted p-4 h-[calc(100vh-10rem)] overflow-auto">
-                                <pre className="text-sm">
-                                    {JSON.stringify(item.scrapedData, null, 2)}
-                                </pre>
-                            </div>
-                          </SheetContent>
-                        </Sheet>
-                    ) : (
-                        <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
