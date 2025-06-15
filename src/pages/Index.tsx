@@ -1,10 +1,11 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from "@/components/ui/sidebar";
-import { Globe, Workflow, Database, Plus, Play, Home } from "lucide-react";
+import { Globe, Workflow, Database, Play, Home, User } from "lucide-react";
 import { ScrapingInterface } from "@/components/ScrapingInterface";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
 import { DataManager } from "@/components/DataManager";
@@ -200,10 +201,12 @@ const Index = () => {
                       {activeTab === "data" && "Manage and analyze your scraped data"}
                     </p>
                   </div>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Project
-                  </Button>
+                  <Link to="/settings">
+                    <Button variant="ghost" size="icon">
+                      <User className="h-5 w-5" />
+                      <span className="sr-only">Settings</span>
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </header>
