@@ -1,11 +1,11 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from "@/components/ui/sidebar";
-import { Globe, Workflow, Database, Play, Home, User } from "lucide-react";
+import { Globe, Workflow, Database, Play, Home, User, LogOut } from "lucide-react";
 import { ScrapingInterface } from "@/components/ScrapingInterface";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
 import { DataManager } from "@/components/DataManager";
@@ -30,6 +30,12 @@ const Index = () => {
       recordCount: 580
     }
   ]);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    navigate("/login");
+  };
 
   const menuItems = [
     {
@@ -201,12 +207,18 @@ const Index = () => {
                       {activeTab === "data" && "Manage and analyze your scraped data"}
                     </p>
                   </div>
-                  <Link to="/settings">
-                    <Button variant="ghost" size="icon">
-                      <User className="h-5 w-5" />
-                      <span className="sr-only">Settings</span>
+                  <div className="flex items-center space-x-2">
+                    <Link to="/settings">
+                      <Button variant="ghost" size="icon">
+                        <User className="h-5 w-5" />
+                        <span className="sr-only">Settings</span>
+                      </Button>
+                    </Link>
+                    <Button variant="ghost" size="icon" onClick={handleLogout}>
+                      <LogOut className="h-5 w-5" />
+                      <span className="sr-only">Logout</span>
                     </Button>
-                  </Link>
+                  </div>
                 </div>
               </div>
             </header>
