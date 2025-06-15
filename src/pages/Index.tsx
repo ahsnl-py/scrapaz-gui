@@ -1,10 +1,13 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Globe, Workflow, Database, Play, Home, User, LogOut } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Globe, Workflow, Database, Play, Home, User, LogOut, Settings } from "lucide-react";
 import { ScrapingInterface } from "@/components/ScrapingInterface";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
 import { DataManager } from "@/components/DataManager";
@@ -60,96 +63,124 @@ const Index = () => {
   ];
 
   const renderContent = () => {
+    const activeItem = menuItems.find((item) => item.id === activeTab);
+    const descriptions = {
+      home: "Overview of your data engineering activities",
+      scraper: "Configure and run web scrapers",
+      workflow: "Build and manage data processing workflows",
+      data: "Manage and analyze your scraped data",
+    };
+    const description = descriptions[activeTab];
+
+    const PageHeader = ({ title, description }) => (
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
+        {description && <p className="text-lg text-muted-foreground mt-1">{description}</p>}
+      </div>
+    );
+
     switch (activeTab) {
       case "home":
         return (
-          <div className="space-y-6">
-            {/* Dashboard Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center text-blue-700">
-                    <Globe className="w-5 h-5 mr-2" />
-                    Active Scrapers
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-blue-800">12</div>
-                  <p className="text-sm text-blue-600">Running workflows</p>
-                </CardContent>
-              </Card>
+          <>
+            <PageHeader title={activeItem?.title} description={description} />
+            <div className="space-y-6">
+              {/* Dashboard Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-blue-700">
+                      <Globe className="w-5 h-5 mr-2" />
+                      Active Scrapers
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-blue-800">12</div>
+                    <p className="text-sm text-blue-600">Running workflows</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center text-purple-700">
-                    <Database className="w-5 h-5 mr-2" />
-                    Data Records
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-purple-800">45.2K</div>
-                  <p className="text-sm text-purple-600">Total scraped records</p>
-                </CardContent>
-              </Card>
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-purple-700">
+                      <Database className="w-5 h-5 mr-2" />
+                      Data Records
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-purple-800">45.2K</div>
+                    <p className="text-sm text-purple-600">Total scraped records</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center text-green-700">
-                    <Workflow className="w-5 h-5 mr-2" />
-                    Workflows
-                  </CardTitle>
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-green-700">
+                      <Workflow className="w-5 h-5 mr-2" />
+                      Workflows
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-green-800">8</div>
+                    <p className="text-sm text-green-600">Automation pipelines</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recent Projects */}
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle>Recent Projects</CardTitle>
+                  <CardDescription>Your latest scraping projects and their status</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-green-800">8</div>
-                  <p className="text-sm text-green-600">Automation pipelines</p>
+                  <div className="space-y-4">
+                    {projects.map((project) => (
+                      <div key={project.id} className="flex items-center justify-between p-4 rounded-lg border bg-white hover:shadow-md transition-shadow">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                            <Globe className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{project.name}</h3>
+                            <p className="text-sm text-muted-foreground">{project.url}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <Badge variant={project.status === "active" ? "default" : "secondary"}>
+                            {project.status}
+                          </Badge>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{project.recordCount.toLocaleString()} records</p>
+                            <p className="text-xs text-muted-foreground">Last run: {project.lastRun}</p>
+                          </div>
+                          <Button size="sm" variant="outline">
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Recent Projects */}
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Recent Projects</CardTitle>
-                <CardDescription>Your latest scraping projects and their status</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {projects.map((project) => (
-                    <div key={project.id} className="flex items-center justify-between p-4 rounded-lg border bg-white hover:shadow-md transition-shadow">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                          <Globe className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{project.name}</h3>
-                          <p className="text-sm text-muted-foreground">{project.url}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <Badge variant={project.status === "active" ? "default" : "secondary"}>
-                          {project.status}
-                        </Badge>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{project.recordCount.toLocaleString()} records</p>
-                          <p className="text-xs text-muted-foreground">Last run: {project.lastRun}</p>
-                        </div>
-                        <Button size="sm" variant="outline">
-                          <Play className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          </>
         );
       case "scraper":
-        return <ScrapingInterface />;
+        return <>
+          <PageHeader title={activeItem?.title} description={description} />
+          <ScrapingInterface />
+        </>;
       case "workflow":
-        return <WorkflowBuilder />;
+        return <>
+          <PageHeader title={activeItem?.title} description={description} />
+          <WorkflowBuilder />
+        </>;
       case "data":
-        return <DataManager />;
+        return <>
+          <PageHeader title={activeItem?.title} description={description} />
+          <DataManager />
+        </>;
       default:
         return null;
     }
@@ -193,34 +224,44 @@ const Index = () => {
 
           <SidebarInset>
             <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-              <div className="container mx-auto px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <SidebarTrigger />
-                    <div>
-                      <h2 className="text-2xl font-bold">
-                        {menuItems.find(item => item.id === activeTab)?.title}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {activeTab === "home" && "Overview of your data engineering activities"}
-                        {activeTab === "scraper" && "Configure and run web scrapers"}
-                        {activeTab === "workflow" && "Build and manage data processing workflows"}
-                        {activeTab === "data" && "Manage and analyze your scraped data"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Link to="/settings">
-                      <Button variant="ghost" size="icon">
-                        <User className="h-5 w-5" />
-                        <span className="sr-only">Settings</span>
+              <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <SidebarTrigger />
+                </div>
+                <div className="flex items-center space-x-4">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                        <Avatar className="h-9 w-9">
+                          <AvatarFallback>
+                            <User className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
                       </Button>
-                    </Link>
-                    <Button variant="ghost" size="icon" onClick={handleLogout}>
-                      <LogOut className="h-5 w-5" />
-                      <span className="sr-only">Logout</span>
-                    </Button>
-                  </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">Scrap-AZ User</p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            user@example.com
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings" className="cursor-pointer">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>Settings</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </header>
