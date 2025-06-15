@@ -3,43 +3,65 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Play, Settings, Info } from "lucide-react";
+import { Play, Settings, Info, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const defaultSchema = JSON.stringify({
-  type: "object",
-  properties: {
-    quote: { type: "string" },
-    author: { type: "string" },
-  },
-}, null, 2);
+type SchemaField = {
+  id: number;
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+};
 
 export const WebScrapeForm = () => {
   const [url, setUrl] = useState("https://quotes.toscrape.com/");
   const [cssSelector, setCssSelector] = useState(".quote");
   const [aiProvider, setAiProvider] = useState("groq");
-  const [dataSchema, setDataSchema] = useState(defaultSchema);
-  const [storageType, setStorageType] = useState("database");
+  const [schemaFields, setSchemaFields] = useState<SchemaField[]>([
+    { id: 1, name: 'quote', type: 'string' },
+    { id: 2, name: 'author', type: 'string' },
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const handleAddField = () => {
+    setSchemaFields([...schemaFields, { id: Date.now(), name: '', type: 'string' }]);
+  };
+
+  const handleRemoveField = (id: number) => {
+    setSchemaFields(schemaFields.filter(field => field.id !== id));
+  };
+
+  const handleFieldChange = (id: number, key: 'name' | 'type', value: string) => {
+    setSchemaFields(schemaFields.map(field => field.id === id ? { ...field, [key]: value } : field));
+  };
 
   const handleStartScraping = async () => {
     if (!url) {
       toast({ title: "URL Required", description: "Please enter a URL to scrape", variant: "destructive" });
       return;
     }
-    try {
-      JSON.parse(dataSchema);
-    } catch (error) {
-      toast({ title: "Invalid JSON Schema", description: "Please provide a valid JSON in the data schema.", variant: "destructive" });
+
+    const properties = schemaFields.reduce((acc, field) => {
+      if (field.name.trim()) {
+        acc[field.name.trim()] = { type: field.type };
+      }
+      return acc;
+    }, {} as Record<string, { type: string }>);
+
+    if (Object.keys(properties).length === 0) {
+      toast({ title: "Schema Required", description: "Please define at least one attribute for the data schema.", variant: "destructive" });
       return;
     }
 
+    const dataSchema = {
+      type: "object",
+      properties,
+    };
+
     setIsLoading(true);
-    console.log({ url, cssSelector, aiProvider, dataSchema: JSON.parse(dataSchema), storageType });
+    console.log({ url, cssSelector, aiProvider, dataSchema });
     setTimeout(() => {
       setIsLoading(false);
       toast({ title: "Scraping Started", description: `Successfully initiated scraping for ${url}` });
@@ -78,49 +100,54 @@ export const WebScrapeForm = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center">
-            <Label htmlFor="ai_provider">AI Model Provider</Label>
-            {renderTooltip("The AI provider to use for data extraction and formatting.")}
-          </div>
-          <Select value={aiProvider} onValueChange={setAiProvider}>
-            <SelectTrigger id="ai_provider"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="groq">Groq</SelectItem>
-              <SelectItem value="openai">OpenAI</SelectItem>
-              <SelectItem value="anthropic">Anthropic</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="space-y-2">
+        <div className="flex items-center">
+          <Label htmlFor="ai_provider">AI Model Provider</Label>
+          {renderTooltip("The AI provider to use for data extraction and formatting.")}
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center">
-            <Label htmlFor="storage_type">Storage Type</Label>
-            {renderTooltip("Where to store the scraped data.")}
-          </div>
-          <Select value={storageType} onValueChange={setStorageType}>
-            <SelectTrigger id="storage_type"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="database">Database</SelectItem>
-              <SelectItem value="json">JSON File</SelectItem>
-              <SelectItem value="csv">CSV File</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={aiProvider} onValueChange={setAiProvider}>
+          <SelectTrigger id="ai_provider"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="groq">Groq</SelectItem>
+            <SelectItem value="openai">OpenAI</SelectItem>
+            <SelectItem value="anthropic">Anthropic</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center">
-          <Label htmlFor="data_schema">Data Schema (JSON)</Label>
-          {renderTooltip("Define the structure of your data in JSON format.")}
+          <Label>Data Schema</Label>
+          {renderTooltip("Define the structure of your data. The schema will be auto-generated.")}
         </div>
-        <Textarea
-          id="data_schema"
-          placeholder='{ "type": "object", "properties": { ... } }'
-          value={dataSchema}
-          onChange={(e) => setDataSchema(e.target.value)}
-          className="min-h-[120px] font-mono text-sm"
-        />
+        <div className="space-y-2 rounded-md border p-4">
+            {schemaFields.map((field) => (
+                <div key={field.id} className="flex items-center gap-2">
+                    <Input 
+                        placeholder="Attribute Name" 
+                        value={field.name}
+                        onChange={(e) => handleFieldChange(field.id, 'name', e.target.value)}
+                    />
+                    <Select value={field.type} onValueChange={(value) => handleFieldChange(field.id, 'type', value)}>
+                        <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="string">String</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="boolean">Boolean</SelectItem>
+                            <SelectItem value="object">Object</SelectItem>
+                            <SelectItem value="array">Array</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button variant="ghost" size="icon" onClick={() => handleRemoveField(field.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                </div>
+            ))}
+            <Button variant="outline" size="sm" onClick={handleAddField}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Attribute
+            </Button>
+        </div>
       </div>
 
       <div className="flex space-x-3">
