@@ -14,7 +14,7 @@ export interface WorkflowNodeData {
   label?: string;
   description?: string;
   onDelete: (nodeId: string) => void;
-  onEdit?: (nodeId: string) => void;
+  onEdit?: (nodeId: string, newName?: string) => void;
 }
 
 export interface ComponentGroup {

@@ -28,10 +28,18 @@ export const useWorkflowState = () => {
     setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
   }, [setNodes, setEdges]);
 
-  const editNode = useCallback((nodeId: string) => {
-    // TODO: Implement node editing functionality
-    console.log("Edit node:", nodeId);
-  }, []);
+  const editNode = useCallback((nodeId: string, newName?: string) => {
+    if (newName) {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, label: newName } }
+            : node
+        )
+      );
+    }
+    console.log("Edit node:", nodeId, "New name:", newName);
+  }, [setNodes]);
 
   const connectNodes = useCallback((params: Connection) => {
     setEdges((eds) => addEdge(params, eds));
