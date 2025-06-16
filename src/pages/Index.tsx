@@ -7,7 +7,8 @@ import PageHeader from "@/components/layout/PageHeader";
 import { ScrapingInterface } from "@/components/ScrapingInterface";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
 import { DataManager } from "@/components/DataManager";
-import { Globe, Workflow, Database, Home } from "lucide-react";
+import { Globe, Workflow, Database, Home, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -81,7 +82,13 @@ const Index = () => {
       case "workflow":
         return (
           <>
+          <div className="flex items-center justify-between">
             <PageHeader title={activeItem?.title || ''} description={description} />
+            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Create New Workflow
+            </Button>
+          </div>
             <WorkflowBuilder />
           </>
         );
