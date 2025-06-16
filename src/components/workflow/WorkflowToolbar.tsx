@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Save, Play } from "lucide-react";
 
 interface WorkflowToolbarProps {
@@ -6,18 +7,34 @@ interface WorkflowToolbarProps {
   onSave: () => void;
   isRunning: boolean;
   nodeCount: number;
+  workflowName?: string;
+  onWorkflowNameChange?: (name: string) => void;
 }
 
 export const WorkflowToolbar = ({ 
   onRun, 
   onSave, 
   isRunning, 
-  nodeCount 
+  nodeCount,
+  workflowName = "New Workflow",
+  onWorkflowNameChange
 }: WorkflowToolbarProps) => {
   return (
     <div className="h-12 bg-background border-b border-border flex items-center justify-between px-4">
       <div className="flex items-center space-x-4">
         <h1 className="text-lg font-semibold">Workflow Editor</h1>
+        {onWorkflowNameChange ? (
+          <Input
+            value={workflowName}
+            onChange={(e) => onWorkflowNameChange(e.target.value)}
+            className="w-64"
+            placeholder="Enter workflow name"
+          />
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            {workflowName}
+          </span>
+        )}
         <span className="text-sm text-muted-foreground">
           {nodeCount} component{nodeCount !== 1 ? 's' : ''}
         </span>
