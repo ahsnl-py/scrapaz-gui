@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Workflow, Plus, Play, Settings, ArrowDown, Database, Filter, FileText } from "lucide-react";
+import { SimpleNodeEditor } from "./SimpleNodeEditor";
 
 export const WorkflowBuilder = () => {
   const [workflows] = useState([
@@ -94,7 +95,18 @@ export const WorkflowBuilder = () => {
           </div>
         </CardContent>
       </Card>
-
+      
+      {/* Simple Node Editor */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Simple Node Editor</CardTitle>
+          <CardDescription>Drag and drop components to create your data pipeline</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SimpleNodeEditor />
+        </CardContent>
+      </Card>
+      
       {/* Workflow Builder */}
       <Card>
         <CardHeader>
