@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Play, Info, Plus, Trash2, RotateCcw, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { scrapingHistoryUtils, ScrapingJob } from "@/utils/scrapingHistory";
 
 type SchemaField = {
   id: number;
@@ -19,11 +20,13 @@ export const WebScrapeForm = () => {
   const [cssSelector, setCssSelector] = useState(".quote");
   const [aiProvider, setAiProvider] = useState("groq");
   const [schemaFields, setSchemaFields] = useState<SchemaField[]>([
-    { id: 1, name: 'quote', type: 'string' },
+    { id: 1, name: 'text', type: 'string' },
     { id: 2, name: 'author', type: 'string' },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [scrapedData, setScrapedData] = useState<any>(null);
   const { toast } = useToast();
 
   const handleAddField = () => {
@@ -43,10 +46,69 @@ export const WebScrapeForm = () => {
     setCssSelector(".quote");
     setAiProvider("groq");
     setSchemaFields([
-      { id: 1, name: 'quote', type: 'string' },
+      { id: 1, name: 'text', type: 'string' },
       { id: 2, name: 'author', type: 'string' },
     ]);
     toast({ title: "Form Cleared", description: "All fields have been reset to their default values." });
+  };
+
+  const createScrapingJob = async (jobData: any) => {
+    const response = await fetch('http://0.0.0.0:8000/api/v1/jobs', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(jobData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create job: ${response.statusText}`);
+    }
+
+    return await response.json();
+  };
+
+  const checkJobStatus = async (jobId: string): Promise<any> => {
+    const response = await fetch(`http://0.0.0.0:8000/api/v1/jobs/${jobId}`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to check job status: ${response.statusText}`);
+    }
+
+    return await response.json();
+  };
+
+  const getJobResult = async (jobId: string): Promise<any> => {
+    const response = await fetch(`http://0.0.0.0:8000/api/v1/jobs/${jobId}/result`, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get job result: ${response.statusText}`);
+    }
+
+    return await response.json();
+  };
+
+  const downloadJsonFile = (data: any, filename: string) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleStartScraping = async () => {
@@ -73,12 +135,102 @@ export const WebScrapeForm = () => {
     };
 
     setIsLoading(true);
-    console.log({ url, cssSelector, aiProvider, dataSchema });
-    setTimeout(() => {
+
+    try {
+      // Step 1: Create scraping job
+      const jobData = {
+        url,
+        css_selector: cssSelector,
+        ai_model_provider: aiProvider,
+        data_schema: dataSchema,
+        storage_type: "memory"
+      };
+
+      const jobResponse = await createScrapingJob(jobData);
+      const newJobId = jobResponse.id;
+      setJobId(newJobId);
+
+      // Save initial job to history
+      const historyJob: ScrapingJob = {
+        id: `job-${Date.now()}`, // Generate a unique ID for history
+        jobId: newJobId, // Store the API job ID
+        source: new URL(url).hostname,
+        type: "Web",
+        status: "In Progress",
+        timestamp: new Date().toLocaleString(),
+        itemCount: 0,
+        data: {},
+        url: url,
+        cssSelector: cssSelector,
+        aiModelProvider: aiProvider
+      };
+      
+      scrapingHistoryUtils.saveJob(historyJob);
+
+      toast({ title: "Job Created", description: `Scraping job started with ID: ${newJobId}` });
+
+      // Step 2: Poll for job completion
+      let jobStatus = "pending";
+      let attempts = 0;
+      const maxAttempts = 60; // 5 minutes with 5-second intervals
+
+      while (jobStatus !== "completed" && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        
+        const statusResponse = await checkJobStatus(newJobId);
+        jobStatus = statusResponse.status;
+        attempts++;
+
+        if (jobStatus === "failed") {
+          throw new Error(statusResponse.error_message || "Job failed");
+        }
+      }
+
+      if (jobStatus !== "completed") {
+        throw new Error("Job timed out");
+      }
+
+      // Step 3: Get job result
+      const resultResponse = await getJobResult(newJobId);
+      setScrapedData(resultResponse);
+
+      // Update history with completed data
+      scrapingHistoryUtils.updateJobStatus(newJobId, "Completed", resultResponse);
+
       setIsLoading(false);
-      toast({ title: "Scraping Complete!", description: `Successfully scraped ${url}` });
+      toast({ title: "Scraping Complete!", description: `Successfully scraped ${resultResponse.total_items} items from ${url}` });
       setIsDialogOpen(true);
-    }, 2000);
+
+    } catch (error) {
+      // Update history with failed status
+      if (jobId) {
+        scrapingHistoryUtils.updateJobStatus(jobId, "Failed");
+      }
+      
+      setIsLoading(false);
+      toast({ 
+        title: "Scraping Failed", 
+        description: error instanceof Error ? error.message : "An unexpected error occurred", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleDownload = () => {
+    if (scrapedData && jobId) {
+      const filename = `scraped_data_${jobId}_${new Date().toISOString().split('T')[0]}.json`;
+      downloadJsonFile(scrapedData, filename);
+      toast({ title: "Download Started", description: "Your file is being downloaded." });
+      setIsDialogOpen(false);
+    }
+  };
+
+  const handleSaveToDataManager = () => {
+    if (scrapedData) {
+      // TODO: Implement saving to data manager
+      toast({ title: "Saving...", description: "Data is being saved to the Data Manager." });
+      setIsDialogOpen(false);
+    }
   };
 
   const renderTooltip = (text: string) => (
@@ -166,7 +318,7 @@ export const WebScrapeForm = () => {
       <div className="flex space-x-3">
         <Button onClick={handleStartScraping} disabled={isLoading} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
           <Play className="w-4 h-4 mr-2" />
-          {isLoading ? "Starting..." : "Start Scraping"}
+          {isLoading ? "Scraping..." : "Start Scraping"}
         </Button>
         <Button variant="outline" onClick={handleClearForm} disabled={isLoading}>
           <RotateCcw className="w-4 h-4 mr-2" />
@@ -179,7 +331,7 @@ export const WebScrapeForm = () => {
         if (!open) {
           toast({
             title: "Data Not Saved",
-            description: "The cached data from this scrape will be lost.",
+            description: "The scraped data will be lost.",
             variant: "destructive"
           });
         }
@@ -188,21 +340,16 @@ export const WebScrapeForm = () => {
           <DialogHeader>
             <DialogTitle>Scraping Complete</DialogTitle>
             <DialogDescription>
-              What would you like to do with the scraped data? If you close this, the data will be discarded.
+              Successfully scraped {scrapedData?.total_items || 0} items from {url}. 
+              What would you like to do with the data?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-start gap-2 pt-4">
-            <Button onClick={() => {
-              toast({ title: "Downloading...", description: "Your file is being prepared." });
-              setIsDialogOpen(false);
-            }}>
+            <Button onClick={handleDownload}>
               <Download className="w-4 h-4 mr-2" />
-              Download
+              Download JSON
             </Button>
-            <Button variant="secondary" onClick={() => {
-              toast({ title: "Saving...", description: "Data is being saved to the Data Manager." });
-              setIsDialogOpen(false);
-            }}>
+            <Button variant="secondary" onClick={handleSaveToDataManager}>
               Save to Data Manager
             </Button>
           </DialogFooter>
